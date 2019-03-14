@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<style>
+		input, a, button {
+			display: none;
+		}
+	</style>
+	<link href='https://fonts.googleapis.com/css?family=Aldrich' rel='stylesheet'>
+</head>
+<body>
+	<canvas id='canvas' tabindex="1">Your browser does not support canvas</canvas>
+	<input id='fileButton' type='file' accept=".json"></input>
+	<button id='downloadButton' onclick="downloadFile()"></button>
+	<a id="downloadLink"></a>
+	<script type="module" src='./src/main.js'></script>
+</body>
+<html>
