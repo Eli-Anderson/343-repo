@@ -6,44 +6,35 @@ import MButton from "./button.js";
 let deadSprite = new RoundRect({'color':new Color({'r':0,'g':0,'b':0,'a':0.3}), 'r':15, 'borderWidth':3, 'borderColor':Pallette.border});
 let aliveSprite = new RoundRect({'color':new Color({'r':220,'g':220,'b':220}), 'r':15, 'borderWidth':3, 'borderColor':Pallette.border});
 
+const sprites = [deadSprite, aliveSprite];
 const DEAD = 0;
 const ALIVE = 1;
 
 /**
- * Class for the board's cells. Each Cell has a positition (col, row) and a state.
- * States are ordered as follows:
+ * Class for the board's cells. Each Cell has only a sprite (for rendering) 
+ * and a state. States are ordered as follows:
  * 0 - Dead
  * 1 - Alive
  * 
- * Each Cell has a sprite, a button, and a highlight. The highlight is controlled
- * in the Board class, and shows up to give the player hints of possible plays
- * during his/her turn.
- *
  * @class      Cell (name)
  */
 class Cell extends GameObject {
-	constructor(transform, board, position, state = 0) {
+	constructor(transform, state = 0) {
 		super({transform});
 		this.state = state % 2; // 0 or 1
-		
-		this.board = board;
-		this.row = position.y;
-		this.col = position.x;
 
-		this.sprites = [deadSprite, aliveSprite];
-
-		this.addComponent(new SpriteRenderer({'sprite':this.sprites[this.state]}));
+		this.addComponent(new SpriteRenderer({'sprite':sprites[this.state]}));
 	}
 
 	/**
 	 * Set the state of the Cell. This will in turn change the sprite of the
-	 * Cell as well as the internal state.
+	 * Cell as well as its internal state.
 	 *
-	 * @param      {number}  state   The state to change it to. 0-2 (EMPTY, WHITE, BLACK)
+	 * @param      {number}  state   The state to change it to. 0 or 1 (DEAD or ALIVE)
 	 */
 	setState(state) {
 		this.state = state % 2;
-		this.getComponent(SpriteRenderer).sprite = this.sprites[this.state];
+		this.getComponent(SpriteRenderer).sprite = sprites[this.state];
 	}
 }
 
@@ -72,6 +63,8 @@ class Board extends GameObject {
 		this.originalStates = [];
 		this.downloadIndex = 1;
 
+		this.updateRate = 30; // we mutate every 30 frames
+
 		//
 		// Formatting the Board's size (width and height) based on the number of cells
 		//
@@ -80,12 +73,6 @@ class Board extends GameObject {
 		let margins = 32;
 		let cellSize = 64 / (this.cols / 6);
 		
-
-		for (let s of [deadSprite, aliveSprite]) {
-			// scale the border radius with the size
-			s.r = 15 / (this.cols / 6);
-			s.borderWidth = 3 / (this.cols / 6);
-		}
 
 		// set our board's width and height
 		this.transform.width = 510;
@@ -133,17 +120,39 @@ class Board extends GameObject {
 		randomizeButton.getComponent(TextRenderer).font.size = 16;
 		this.add(randomizeButton);
 
-		let iterateButton = new MButton({
-			'position':new Vector2({'x':rect.right+12, 'y':rect.bottom-128}),
-			'text':"NEXT",
-			'onclick':()=>{this.iterate()}});
-		this.add(iterateButton);
+		let fastButton = new MButton({
+			'position':new Vector2({'x':rect.right+80, 'y':rect.bottom-128}),
+			'text':">>",
+			'onclick':()=>{if (this.updateRate > 10) this.updateRate-=5}});
+		fastButton.transform.width = 48;
+		this.add(fastButton);
+
+		let slowButton = new MButton({
+			'position':new Vector2({'x':rect.right+16, 'y':rect.bottom-128}),
+			'text':"<<",
+			'onclick':()=>{if (this.updateRate < 60) this.updateRate+=5}});
+		slowButton.transform.width = 48;
+		this.add(slowButton);
 
 		let resetButton = new MButton({
 			'position':new Vector2({'x':rect.right+12, 'y':rect.bottom-64}),
 			'text':"RESET",
 			'onclick':()=>{this.reset()}});
 		this.add(resetButton);
+
+		let incSizeButton = new MButton({
+			'position':new Vector2({'x':rect.left-56, 'y':rect.top+16}),
+			'text':"+",
+			'onclick':()=>{this.resize(this.cells.length+1)}});
+		incSizeButton.transform.width = 48;
+		this.add(incSizeButton);
+
+		let decSizeButton = new MButton({
+			'position':new Vector2({'x':rect.left-56, 'y':rect.top+80}),
+			'text':"-",
+			'onclick':()=>{this.resize(this.cells.length-1)}});
+		decSizeButton.transform.width = 48;
+		this.add(decSizeButton);
 		//
 		// End of component additions
 		//
@@ -170,36 +179,49 @@ class Board extends GameObject {
 	}
 
 	neighbors(cell) {
-		let col = cell.col;
-		let row = cell.row;
+		let c,r;
+		for (let row=0; row < this.cells.length; row++) {
+			for (let col=0; col < this.cells[row].length; col++) {
+				if (this.cells[row][col] === cell) {
+					r = row;
+					c = col;
+				}
+			}
+		}
 
 		let sizeY = this.cells.length;
-		let sizeX = this.cells[row].length;
+		let sizeX = this.cells[r].length;
 
 		let count = 0;
 
-		if (row > 0) 		count += this.cells[row-1][col].state; // handle top cell
-		if (row < sizeX-1) 	count += this.cells[row+1][col].state; // handle bottom cell
+		if (r > 0) 		count += this.cells[r-1][c].state; // handle top cell
+		if (r < sizeX-1) 	count += this.cells[r+1][c].state; // handle bottom cell
 
-		if (col > 0) 		count += this.cells[row][col-1].state; // handle left cell
-		if (col < sizeY-1) 	count += this.cells[row][col+1].state; // handle right cell
+		if (c > 0) 		count += this.cells[r][c-1].state; // handle left cell
+		if (c < sizeY-1) 	count += this.cells[r][c+1].state; // handle right cell
 
-		if (row > 0 && col > 0) 			count += this.cells[row-1][col-1].state; // handle top left cell
-		if (row < sizeX-1 && col < sizeY-1) count += this.cells[row+1][col+1].state; // handle bottom right cell
-		if (row > 0 && col < sizeY-1) 		count += this.cells[row-1][col+1].state; // handle top right cell
-		if (row < sizeX-1 && col > 0) 		count += this.cells[row+1][col-1].state; // handle bottom left cell
+		if (r > 0 && c > 0) 			count += this.cells[r-1][c-1].state; // handle top left cell
+		if (r < sizeX-1 && c < sizeY-1) count += this.cells[r+1][c+1].state; // handle bottom right cell
+		if (r > 0 && c < sizeY-1) 		count += this.cells[r-1][c+1].state; // handle top right cell
+		if (r < sizeX-1 && c > 0) 		count += this.cells[r+1][c-1].state; // handle bottom left cell
 		return count;
 	}
 
 	/**
 	 * Creates and initializes the board's cells. This sets them all to state 0 (empty).
-	 * This method should only be called through the constructor.
 	 */
 	init() {
 		let cellPaddingX = 64 / this.cols;
 		let cellPaddingY = 64 / this.rows;
 		let margins = 32;
 		let cellSize = 64 / (this.cols / 6);
+
+		for (let s of [deadSprite, aliveSprite]) {
+			// scale the border radius with the size
+			s.r = 15 / (this.cols / 6);
+			s.borderWidth = 3 / (this.cols / 6);
+		}
+
 		for (let row = 0; row < this.rows; row++) {
 			this.cells.push([])
 			for (let col = 0; col < this.cols; col++) {
@@ -212,13 +234,12 @@ class Board extends GameObject {
 						'y':y, 'z':1, 
 						'width':cellSize, 
 						'height':cellSize
-					}), this, new Vector2({'x':col,'y':row}), 0);
+					}), 0);
 				this.add(cell);
 				this.cells[row].push(cell);
 			}
 		}
 		this.randomize();
-		console.log(this);
 	}
 
 	/**
@@ -265,12 +286,15 @@ class Board extends GameObject {
 			// randomly pick 8-12 cells and set them to alive
 			cell.setState(ALIVE);
 		}
+		this.set();
 	}
 
 	reset() {
-		for (let row = 0; row < this.cells.length; row++) {
-			for (let col = 0; col < this.cells[row].length; col++) {
-				
+		if (this.originalStates.length > 0) {
+			for (let row = 0; row < this.cells.length; row++) {
+				for (let col = 0; col < this.cells[row].length; col++) {
+					this.cells[row][col].setState(this.originalStates[row][col]);
+				}
 			}
 		}
 	}
@@ -291,6 +315,12 @@ class Board extends GameObject {
 		dlElement.click();
 	}
 
+	/**
+	 * Reads a JSON file storing board data and, if possible, 
+	 * loads it into the board. The format of the file
+	 *
+	 * @param      {<type>}  e       { parameter_description }
+	 */
 	read(e) {
 		let file = e.target.files[0];
 		let reader = new FileReader();
@@ -305,20 +335,14 @@ class Board extends GameObject {
 				}
 				if (	data.length !== this.cells.length
 					|| 	data.length > 0 && data[0].length !== this.cells[0].length) {
-					for (let cell of this.cells.flat()) {
-						cell.destroy();
-					}
-					this.cells = [];
-
-					this.rows = data.length;
-					this.cols = data[0].length;
-					this.init();
+					this.resize(data.length);
 				}
-				for (let row=0; row < data.length; row++) {
-					for (let col=0; col < data[row].length; col++) {
+				for (let row=0; row < this.rows; row++) {
+					for (let col=0; col < this.cols; col++) {
 						this.cells[row][col].setState(data[row][col]);
 					}
 				}
+				this.set();
 			} catch(e) {
 				console.warn("File was not parsable from JSON or was of the incorrect format");
 				console.warn(e);
@@ -327,8 +351,41 @@ class Board extends GameObject {
 		}
 	}
 
+	/**
+	 * Saves the state of the board so reset() can be used to come back
+	 * to the saved state.
+	 */
+	set() {
+		this.originalStates = [];
+		for (let row = 0; row < this.cells.length; row++) {
+			this.originalStates.push([]);
+			for (let col = 0; col < this.cells[row].length; col++) {
+				this.originalStates[row].push(this.cells[row][col].state);
+			}
+		}
+	}
+
+	/**
+	 * Resize the board to a size x size grid.
+	 *
+	 * @param      {number}  size    The size
+	 */
+	resize(size) {
+		if (size >= 5) {
+			for (let cell of this.cells.flat()) {
+				cell.destroy();
+			}
+			this.cells = [];
+			this._children = [];
+
+			this.rows = size;
+			this.cols = size;
+			this.init();
+		}
+	}
+
 	update(dt) {
-		if (Game.instance.ticks % 30 === 0) {
+		if (Game.instance.ticks % this.updateRate === 0) {
 			this.iterate();
 		}
 	}

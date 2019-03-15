@@ -44,7 +44,7 @@ Scene.current.mainCamera = cameraObj.getComponent(Camera);
 
 function main() {
 	// create our Board and add it to our Scene
-	Scene.current.add(new Board({'size':10}));
+	Scene.current.add(new Board({'size':20}));
 	// then start the game's loop
 	game.start();
 }
