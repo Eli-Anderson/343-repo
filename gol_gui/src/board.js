@@ -22,7 +22,6 @@ class Cell extends GameObject {
 	constructor(transform, state = 0) {
 		super({transform});
 		this.state = state % 2; // 0 or 1
-
 		this.addComponent(new SpriteRenderer({'sprite':sprites[this.state]}));
 	}
 
@@ -37,13 +36,6 @@ class Cell extends GameObject {
 		this.getComponent(SpriteRenderer).sprite = sprites[this.state];
 	}
 }
-
-const status = {
-	'PLAYING': 0,
-	'NOMOVES': 1,
-	'GAMEOVER': 2
-}
-Object.freeze(status); // prevent editing our status object
 
 
 /**
@@ -178,6 +170,12 @@ class Board extends GameObject {
 		}
 	}
 
+	/**
+	 * Get the number of alive neighbors (in 8 adjacent cells)
+	 *
+	 * @param      {Cell}  cell    The cell whose neighbors to check for
+	 * @return     {number}  The number of alive neighbors
+	 */
 	neighbors(cell) {
 		let c,r;
 		for (let row=0; row < this.cells.length; row++) {
@@ -275,20 +273,27 @@ class Board extends GameObject {
 
 	/**
 	 * Reset the board to a random state.
-	 *
 	 */
 	randomize() {
 		for (let cell of this.cells.flat()) {
 			cell.setState(DEAD);
 		}
-		let n = this.cells.length*this.cells.length;
-		for (let cell of Util.arrSample(this.cells.flat(), Util.randRange(Math.floor(n/4), Math.floor(n/3)))) {
-			// randomly pick 8-12 cells and set them to alive
+		let l = this.cells.length*this.cells.length; // number of total cells
+		let n = Util.randRange(Math.floor(l/4), Math.floor(l/3));
+
+		// we choose between 1/4 & 1/3 of the total cells to set to alive
+		for (let cell of Util.arrSample(this.cells.flat(), n)) {
+			// randomly pick n cells and set them to alive
 			cell.setState(ALIVE);
 		}
-		this.set();
+		this.set(); // save our board, so we can reset it later
 	}
 
+	/**
+	 * Resets the board's cells' states to the last "saved" point.
+	 * Save the board by calling set(). Set() is called every time
+	 * the board is randomized or loaded from file.
+	 */
 	reset() {
 		if (this.originalStates.length > 0) {
 			for (let row = 0; row < this.cells.length; row++) {
@@ -299,6 +304,12 @@ class Board extends GameObject {
 		}
 	}
 
+	/**
+	 * Download the current board's state to file. It prompts the user
+	 * to save the file to disk with the name "file_n.json" where n
+	 * is a number > 0. n is increased every time the user downloads
+	 * the board's state, that way the file is not overwritten.
+	 */
 	download() {
 		let boardData = [];
 		for (let row = 0; row < this.cells.length; row++) {
@@ -310,7 +321,7 @@ class Board extends GameObject {
 
 		let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(boardData));
 		let dlElement = document.getElementById('downloadLink');
-		dlElement.setAttribute("href",     dataStr     );
+		dlElement.setAttribute("href", dataStr);
 		dlElement.setAttribute("download", "file_"+this.downloadIndex++);
 		dlElement.click();
 	}
@@ -384,6 +395,13 @@ class Board extends GameObject {
 		}
 	}
 
+	/**
+	 * Updates the board. This is called by the engine every
+	 * frame, so we only want to call iterate() after every
+	 * 30 frames or so.
+	 *
+	 * @param      {number}  dt  The amount of time that passed since the last frame
+	 */
 	update(dt) {
 		if (Game.instance.ticks % this.updateRate === 0) {
 			this.iterate();

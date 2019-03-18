@@ -22,7 +22,7 @@
  *		download - downloads the current Board's cells' states to a .json file
  *		
 */
-import {Game, Color, Vector2, Rect, Scene, GameObject, Camera, Loader, ImageResource, Sprite, Transform, TextBox, Font} from "https://eli-anderson.github.io/JSEngine2D/engine.js";
+import {Game, Vector2, Rect, Scene, GameObject, Camera, Transform} from "https://eli-anderson.github.io/JSEngine2D/engine.js";
 import {Board} from "./board.js";
 import Pallette from "./pallette.js";
 
