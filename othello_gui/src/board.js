@@ -1,4 +1,4 @@
-import {GameObject, Input, TextRenderer, Font, SpriteRenderer, Sprite, Button, Scene, Color, Vector2, Transform, Util, PhysicsEngine} from "https://eli-anderson.github.io/JSEngine2D/engine.js";
+import {GameObject, TextRenderer, Font, SpriteRenderer, Sprite, Button, Scene, Color, Vector2, Transform} from "https://eli-anderson.github.io/JSEngine2D/engine.js";
 import Pallette from "./pallette.js";
 import RoundRect from "./RoundRect.js";
 
@@ -35,8 +35,8 @@ class Cell extends GameObject {
 
 		this.sprites = [emptySprite, whiteSprite, blackSprite];
 
-		this.addComponent(new SpriteRenderer({'sprite':this.sprites[this.state]}));
-		this.addComponent(new Button());
+		this.attach(new SpriteRenderer({'sprite':this.sprites[this.state]}));
+		this.attach(new Button());
 		this.getComponent(Button).onClick = ()=>{
 			this.board.attemptPlace(this.col, this.row, this.state);
 		}
@@ -45,7 +45,7 @@ class Cell extends GameObject {
 			'transform':this.transform,
 			'isUI':true
 		});
-		this.highlight.addComponent(new SpriteRenderer({
+		this.highlight.attach(new SpriteRenderer({
 			'sprite':highlightSprite
 		}))
 		this.add(this.highlight);
@@ -114,7 +114,7 @@ class Board extends GameObject {
 		//
 		// Adding the components necessary for rendering the board and text
 		//
-		this.addComponent(new SpriteRenderer({
+		this.attach(new SpriteRenderer({
 			'sprite':new RoundRect({
 				'color':Pallette.board, 
 				'borderWidth':4, 
@@ -125,7 +125,7 @@ class Board extends GameObject {
 		this.turnText = new GameObject({
 			'transform':new Transform({'x':rect.right+4, 'y':rect.top+8, 'z':15, 'width':128, 'height':64}),
 			'isUI':true});
-		this.turnText.addComponent(new TextRenderer({
+		this.turnText.attach(new TextRenderer({
 			'text':"White's turn", 
 			'font':new Font({
 				'name': "Aldrich",
@@ -138,13 +138,13 @@ class Board extends GameObject {
 		this.resetButton = new GameObject({
 			'transform':new Transform({'x':rect.right+12, 'y':rect.bottom-64, 'z':15, 'width':88, 'height':48}),
 			'isUI':true});
-		this.resetButton.addComponent(new SpriteRenderer({
+		this.resetButton.attach(new SpriteRenderer({
 			'sprite':new RoundRect({
 				'color':Pallette.board.copy(), 
 				'r':8,
 				'borderWidth':2, 
 				'borderColor':Pallette.border})}));
-		this.resetButton.addComponent(new TextRenderer({
+		this.resetButton.attach(new TextRenderer({
 			'text':"RESET",
 			'font':new Font({
 				'name': "Aldrich",
@@ -152,7 +152,7 @@ class Board extends GameObject {
 				'vAlignment': Font.CENTERED,
 				'hAlignment': Font.CENTERED
 		})}));
-		this.resetButton.addComponent(new Button()).onHover = (pt)=>{
+		this.resetButton.attach(new Button()).onHover = (pt)=>{
 			this.resetButton.getComponent(SpriteRenderer).sprite.color.a = 0.8;
 		}
 		this.resetButton.getComponent(Button).onExit = (pt)=>{
