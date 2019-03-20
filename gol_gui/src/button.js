@@ -8,13 +8,13 @@ export default class MButton extends GameObject {
 				'isUI':true});
 
 
-		this.addComponent(new SpriteRenderer({
+		this.attach(new SpriteRenderer({
 			'sprite':new RoundRect({
 				'color':Pallette.board.copy(), 
 				'r':8,
 				'borderWidth':2, 
 				'borderColor':Pallette.border})}));
-		this.addComponent(new TextRenderer({
+		this.attach(new TextRenderer({
 			'text':text,
 			'font':new Font({
 				'name': "Aldrich",
@@ -22,7 +22,7 @@ export default class MButton extends GameObject {
 				'vAlignment': Font.CENTERED,
 				'hAlignment': Font.CENTERED
 		})}));
-		this.addComponent(new Button()).onHover = (pt)=>{
+		this.attach(new Button()).onHover = (pt)=>{
 			this.getComponent(SpriteRenderer).sprite.color.a = 0.8;
 		}
 		this.getComponent(Button).onExit = (pt)=>{
