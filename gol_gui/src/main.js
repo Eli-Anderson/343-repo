@@ -36,7 +36,7 @@ Scene.getScene('main').bgColor = Pallette.background; // set the background to a
 
 // now we create our camera and add it to the scene
 let cameraObj = new GameObject({'transform':new Transform({'width':720,'height':480})});
-cameraObj.addComponent(new Camera({'viewport':new Rect({'width':720,'height':480})}));
+cameraObj.attach(new Camera({'viewport':new Rect({'width':720,'height':480})}));
 Scene.current.add(cameraObj);
 
 // set it as our main camera

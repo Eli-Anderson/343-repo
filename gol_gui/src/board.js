@@ -1,4 +1,4 @@
-import {GameObject, Game, TextRenderer, SpriteRenderer, Sprite, Scene, Color, Vector2, Transform, Util} from "https://eli-anderson.github.io/JSEngine2D/engine.js";
+import {GameObject, Game, TextRenderer, SpriteRenderer, Sprite, Scene, Color, Vector2, Transform, Random} from "https://eli-anderson.github.io/JSEngine2D/engine.js";
 import Pallette from "./pallette.js";
 import RoundRect from "./RoundRect.js";
 import MButton from "./button.js";
@@ -22,7 +22,7 @@ class Cell extends GameObject {
 	constructor(transform, state = 0) {
 		super({transform});
 		this.state = state % 2; // 0 or 1
-		this.addComponent(new SpriteRenderer({'sprite':sprites[this.state]}));
+		this.attach(new SpriteRenderer({'sprite':sprites[this.state]}));
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Board extends GameObject {
 		//
 		
 		// add our component for rendering the board background
-		this.addComponent(new SpriteRenderer({
+		this.attach(new SpriteRenderer({
 			'sprite':new RoundRect({
 				'color':Pallette.board, 
 				'borderWidth':4, 
@@ -279,10 +279,10 @@ class Board extends GameObject {
 			cell.setState(DEAD);
 		}
 		let l = this.cells.length*this.cells.length; // number of total cells
-		let n = Util.randRange(Math.floor(l/4), Math.floor(l/3));
+		let n = Random.range(Math.floor(l/4), Math.floor(l/3));
 
 		// we choose between 1/4 & 1/3 of the total cells to set to alive
-		for (let cell of Util.arrSample(this.cells.flat(), n)) {
+		for (let cell of Random.sample(this.cells.flat(), n)) {
 			// randomly pick n cells and set them to alive
 			cell.setState(ALIVE);
 		}
